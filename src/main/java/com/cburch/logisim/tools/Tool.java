@@ -68,5 +68,9 @@ public abstract class Tool implements AttributeDefaultProvider {
     public void keyPressed(Canvas canvas, KeyEvent e) { }
     public void keyReleased(Canvas canvas, KeyEvent e) { }
     public Cursor getCursor() { return dflt_cursor; }
+    
+    public boolean equals(Tool other) {
+    	return this.toString().equals(other.toString());
+    }
 
 }

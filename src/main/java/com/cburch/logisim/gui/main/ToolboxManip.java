@@ -30,6 +30,7 @@ import com.cburch.logisim.proj.ProjectEvent;
 import com.cburch.logisim.proj.ProjectListener;
 import com.cburch.logisim.tools.AddTool;
 import com.cburch.logisim.tools.Library;
+import com.cburch.logisim.tools.SelectTool;
 import com.cburch.logisim.tools.Tool;
 
 class ToolboxManip implements ProjectExplorerListener {
@@ -140,10 +141,73 @@ class ToolboxManip implements ProjectExplorerListener {
         proj.addProjectListener(myListener);
         myListener.setFile(null, proj.getLogisimFile());
     }
+    
+    private void processSetTool(ProjectExplorerEvent event) {
+    	Object selected = event.getTarget();
+        if (selected instanceof ProjectExplorerToolNode) {
+            Tool tool = ((ProjectExplorerToolNode) selected).getValue();
+            if (tool instanceof AddTool) {
+                AddTool addTool = (AddTool) tool;
+                ComponentFactory source = addTool.getFactory();
+                if (source instanceof SubcircuitFactory) {
+                    SubcircuitFactory circFact = (SubcircuitFactory) source;
+                    Circuit circ = circFact.getSubcircuit();
+                    //If current circuit
+                    if (proj.getCurrentCircuit() == circ) {
+                    	System.out.println("Same circ");
+                        AttrTableModel m = new AttrTableCircuitModel(proj, circ);
+                        proj.getFrame().setAttrTableModel(m);
+                        return;
+                    }
+                }   
+            }
+            if(!proj.getTool().equals(tool)) {
+            	setTool(tool);
+            }
+        }
+    }
+    private void setTool(Tool tool) {
+    	System.out.println("Set tool");
+    	if(!proj.getTool().equals(tool)) {
+    		lastSelected = proj.getTool();
+            proj.setTool(tool);
+            proj.getFrame().viewAttributes(tool);
+    	} else {
+    		System.out.println("Same tool");
+    	}
+    	
+    }
+    private void changeCircuit(ProjectExplorerEvent event) {
+    	Object clicked = event.getTarget();
+        if (clicked instanceof ProjectExplorerToolNode) {
+            Tool baseTool = ((ProjectExplorerToolNode) clicked).getValue();
+            if (baseTool instanceof AddTool) {
+                AddTool tool = (AddTool) baseTool;
+                ComponentFactory source = tool.getFactory();
+                if (source instanceof SubcircuitFactory) {
+                    SubcircuitFactory circFact = (SubcircuitFactory) source;
+                    proj.setCurrentCircuit(circFact.getSubcircuit());
+                    proj.getFrame().setEditorView(Frame.EDIT_LAYOUT);
+                    
+                    //Default to select tool on opening circuit
+                    //TODO select the select tool in gui not now tool
+                    proj.setTool(new SelectTool());
+                    /*
+                    if (lastSelected != null) {
+                        proj.setTool(lastSelected);
+                    }
+                    */
+                }
+            }
+        }
+    }
 
     @Override
     public void selectionChanged(ProjectExplorerEvent event) {
-        Object selected = event.getTarget();
+    	System.out.println("Changed");
+    	processSetTool(event);
+    	/*
+    	Object selected = event.getTarget();
         if (selected instanceof ProjectExplorerToolNode) {
             Tool tool = ((ProjectExplorerToolNode) selected).getValue();
             if (tool instanceof AddTool) {
@@ -164,10 +228,14 @@ class ToolboxManip implements ProjectExplorerListener {
             proj.setTool(tool);
             proj.getFrame().viewAttributes(tool);
         }
+        */
     }
 
     @Override
     public void doubleClicked(ProjectExplorerEvent event) {
+    	System.out.println("d-click");
+    	changeCircuit(event);
+    	/*
         Object clicked = event.getTarget();
         if (clicked instanceof ProjectExplorerToolNode) {
             Tool baseTool = ((ProjectExplorerToolNode) clicked).getValue();
@@ -184,7 +252,7 @@ class ToolboxManip implements ProjectExplorerListener {
 
                 }
             }
-        }
+        }*/
     }
 
     @Override
